@@ -574,6 +574,37 @@ CRITICAL: Always include "task": "HANDLER_NAME" in the payload.
 Without it, the receiving worker silently drops the message.
 ```
 
+#### Multiple Claude Desktop Projects
+
+If the user has multiple Claude Desktop projects that need coordination (e.g., "Content Pipeline" and "Code Review"), use **one cue per project**:
+
+```yaml
+# Worker yaml — same handler script, different inbox via env var
+handlers:
+  cowork-content:
+    cmd: "/path/to/python3 /path/to/handler_cowork.py"
+    timeout: 120
+    env:
+      COWORK_INBOX: "/path/to/content-project/inbox"
+
+  cowork-review:
+    cmd: "/path/to/python3 /path/to/handler_cowork.py"
+    timeout: 120
+    env:
+      COWORK_INBOX: "/path/to/review-project/inbox"
+```
+
+Each project gets its own cue in CueAPI, its own handler entry, and its own polling task. The `coordination-config.json` lists them as separate agents:
+
+```json
+"agents": {
+  "cowork-content": {"cue_id": "cue_AAA", "task": "cowork-content"},
+  "cowork-review":  {"cue_id": "cue_BBB", "task": "cowork-review"}
+}
+```
+
+Other agents address messages to the specific project: `cue.send("cowork-content", "Review these posts")`.
+
 **Notify-Human handler** — emails the human via the shared bridge (works for any setup):
 
 ```python
@@ -1265,6 +1296,19 @@ If you change a cue ID (e.g., replace a poisoned cue with a new one), agents wit
 
 ### 13. Cowork/Claude Desktop can't read worker logs or system files
 Claude Desktop runs in a sandbox with limited filesystem access. It can only read files in its mounted directories. Worker logs (`~/Library/Logs/cueapi-worker/`), the worker config yaml, and system binaries are typically outside the sandbox. Use Claude Code or ask the human to check these directly.
+
+### 14. VirtioFS gotcha — Claude Desktop file visibility (CRITICAL)
+Files written by external processes (your CueAPI worker daemon, macOS scripts) are visible to Claude Desktop's **file tools** (Read, Write, Glob) but **invisible to bash** (`ls`, `cat`, `find`). This is a VirtioFS sandboxing asymmetry.
+
+**Always use Glob/Read to find and read inbox files from Claude Desktop. Never use bash `ls`.** If you write a handler that uses `ls inbox/` to find new messages, it will see nothing even though the files are there.
+
+### 15. Inbox archive must be a sibling directory, not a child
+When archiving processed inbox files, use `inbox-processed/` as a sibling — NOT `inbox/processed/`. If the archive is inside the inbox directory, a recursive glob (`inbox/**/*.json`) picks up archived files and reprocesses them.
+
+### 16. Claude Desktop polling is discrete, not continuous
+Claude Desktop's scheduled tasks run as discrete triggered sessions, not background polling. A file dropped into the inbox during a run gets picked up on the **next** run, not immediately. New users may expect instant processing — document this expectation gap.
+
+Best practice: add a processing status guard. When a task starts processing a file, mark it (rename or add a status field). If a run dies mid-task, the next run sees the `processing` marker and skips it instead of double-processing.
 
 ---
 
