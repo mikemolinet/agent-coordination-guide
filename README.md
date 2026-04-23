@@ -1157,6 +1157,61 @@ cue.send("orchestrator", "Pipeline complete. 3 posts processed.")
 
 ---
 
+## Outcome Evidence — Free Audit Trail
+
+Every handler should report outcomes. But don't just report success/failure — attach **evidence** so you can trace exactly what happened across the pipeline.
+
+CueAPI supports these evidence fields on `POST /executions/{id}/outcome`:
+
+| Field | Type | Description | Example |
+|---|---|---|---|
+| `success` | boolean | **Required.** Did the work succeed? | `true` |
+| `result` | string | Output summary (max 2000 chars) | `"Enriched 3 posts"` |
+| `error` | string | Error message on failure | `"Dock API returned 500"` |
+| `external_id` | string | ID in an external system | `"dock:social-post-pipeline"`, `"email:84c58c9f"` |
+| `result_url` | string | URL to the created resource | `"https://trydock.ai/you/workspace-slug"` |
+| `result_type` | string | Category of result | `"dock_workspace"`, `"email"`, `"build"`, `"file"` |
+| `summary` | string | Human-readable 1-liner (max 500 chars) | `"3 posts enriched with hashtags"` |
+| `metadata` | object | Structured data (max 10KB) | `{"rows_updated": 3, "time_ms": 1200}` |
+| `artifacts` | array | List of created resource IDs/URLs | `["integrations.html", "styles.css"]` |
+
+**Example — Agent B reports after enriching posts:**
+
+```python
+cue.report_outcome(
+    success=True,
+    result="Enriched 3 posts with hashtags and platform formatting",
+    external_id="dock:social-post-pipeline",
+    result_url="https://trydock.ai/you/social-post-pipeline",
+    result_type="dock_workspace",
+    summary="3 posts enriched: 2 LinkedIn, 1 Twitter",
+    metadata={
+        "rows_updated": 3,
+        "processing_time_ms": 1200,
+        "pipeline_step": "enrichment",
+    },
+)
+```
+
+**Example — Notify-human reports after sending email:**
+
+```python
+cue.report_outcome(
+    success=True,
+    result="Email sent: Draft ready for review",
+    external_id="email:84c58c9f-b2a4",
+    result_type="email",
+    summary="Email to mike@vector.build: Draft ready for review",
+    metadata={"to": "mike@vector.build", "has_approve_buttons": True},
+)
+```
+
+**Why bother?** When a pipeline breaks at step 4 of 6, evidence lets you trace backwards: what did step 3 produce? What external resource was created? What was the Dock workspace state? Without evidence, you're debugging blind.
+
+`cue_utils_portable.py` supports all evidence fields in `report_outcome()` and `email_human()`.
+
+---
+
 ## Common Gotchas
 
 ### 1. Worker routes by `task` field, NOT cue name

@@ -214,8 +214,20 @@ class CueClient:
 
     # --- Outcome reporting ---
 
-    def report_outcome(self, execution_id=None, success=True, result=None, error=None):
-        """Report outcome for the current execution."""
+    def report_outcome(self, execution_id=None, success=True, result=None, error=None,
+                       external_id=None, result_url=None, result_type=None,
+                       summary=None, metadata=None, artifacts=None):
+        """
+        Report outcome with optional evidence.
+
+        Evidence fields (all optional, but recommended):
+            external_id: External system ID (e.g., "dock:workspace-slug", "email:msg123")
+            result_url: URL to the created resource
+            result_type: Type of result ("dock_workspace", "email", "file", "build", etc.)
+            summary: Human-readable summary (max 500 chars)
+            metadata: Structured data dict (max 10KB) — timing, counts, pipeline state
+            artifacts: List of created resource IDs or URLs
+        """
         execution_id = execution_id or os.environ.get("CUEAPI_EXECUTION_ID")
         if not execution_id:
             return  # Not in a handler context, skip silently
@@ -225,6 +237,18 @@ class CueClient:
             outcome["result"] = str(result)[:2000]
         if error:
             outcome["error"] = str(error)[:2000]
+        if external_id:
+            outcome["external_id"] = external_id
+        if result_url:
+            outcome["result_url"] = result_url
+        if result_type:
+            outcome["result_type"] = result_type
+        if summary:
+            outcome["summary"] = str(summary)[:500]
+        if metadata:
+            outcome["metadata"] = metadata
+        if artifacts:
+            outcome["artifacts"] = artifacts
 
         # Write to outcome file if available
         outcome_file = os.environ.get("CUEAPI_OUTCOME_FILE")
