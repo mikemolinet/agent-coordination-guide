@@ -1,0 +1,33 @@
+{
+  "cueapi_key": "cue_sk_YOUR_KEY_HERE",
+  "cueapi_base": "https://api.cueapi.ai/v1",
+  "bridge_url": "https://cueapi-bridge-production.up.railway.app",
+  "bridge_tenant_id": "tn_YOUR_TENANT_ID",
+  "human_email": "you@email.com",
+  "agents": {
+    "orchestrator": {
+      "cue_id": "cue_XXXXX",
+      "task": "agent-task",
+      "platform": "openclaw",
+      "machine": "machine-1"
+    },
+    "builder": {
+      "cue_id": "cue_YYYYY",
+      "task": "code-build",
+      "platform": "claude-code",
+      "machine": "machine-1"
+    },
+    "researcher": {
+      "cue_id": "cue_ZZZZZ",
+      "task": "cowork-task",
+      "platform": "claude-desktop",
+      "machine": "machine-1"
+    },
+    "human": {
+      "cue_id": "cue_HHHHH",
+      "task": "notify-human",
+      "email": "you@email.com",
+      "machine": "machine-1"
+    }
+  }
+}
