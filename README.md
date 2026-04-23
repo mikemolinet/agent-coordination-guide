@@ -1251,6 +1251,21 @@ Dock's doc mode stores HTML content. If writing to a Dock doc, convert markdown 
 ### 10. flush=True on prints in handlers
 Add `flush=True` to print statements in handler scripts. Without it, output may not appear in worker logs until the process exits (Python buffers stdout when not connected to a terminal).
 
+### 11. Worker handler timeout ≠ CueAPI outcome deadline
+Two separate timeouts govern execution:
+- **Worker handler timeout** (in `cueapi-worker.yaml`) — how long the worker waits for your script to finish. If exceeded, the worker kills the process.
+- **CueAPI outcome deadline** (`outcome_deadline_seconds` on the cue) — how long CueAPI waits for an outcome report after delivery.
+
+Both must be set appropriately. For Claude Code builds, set worker timeout to **300s** (Claude CLI can take 60-120s for real tasks). For simple message handlers, **30-120s** is fine. The outcome deadline should be ≥ the worker timeout.
+
+### 12. Smart agents will refuse cue ID changes — that's correct behavior
+If you change a cue ID (e.g., replace a poisoned cue with a new one), agents with security awareness may refuse to accept the update via agent-to-agent messages. They'll flag it as potential prompt injection — and they're right to.
+
+**The fix:** The human must tell the agent directly (in its chat session) to update the cue ID. Config changes go through the human, not through the agent messaging pipeline. This is a feature, not a bug.
+
+### 13. Cowork/Claude Desktop can't read worker logs or system files
+Claude Desktop runs in a sandbox with limited filesystem access. It can only read files in its mounted directories. Worker logs (`~/Library/Logs/cueapi-worker/`), the worker config yaml, and system binaries are typically outside the sandbox. Use Claude Code or ask the human to check these directly.
+
 ---
 
 ## Files Included with This Guide
