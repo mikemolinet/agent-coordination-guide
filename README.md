@@ -1,8 +1,11 @@
 # Multi-Agent Coordination Guide
 ## Connect Your AI Agents So They Can Work Together
 
-*Version 1.1 — April 2026*
+*Version 1.2 — April 2026*
 *Written for agents to execute. Humans: read the overview, then hand this to your orchestrator agent.*
+
+**GitHub repo (download files directly):** https://github.com/mikemolinet/agent-coordination-guide
+**Quick start for humans:** https://trydock.ai/mike/connect-your-ai-agents
 
 ---
 
@@ -777,7 +780,17 @@ Create `coordination-config.json` — the single source of truth for all agents:
 
 ### Step 3.3: Install the Coordination Utility
 
-Save `cue_utils_portable.py` (included with this guide) in each agent's working directory alongside `coordination-config.json`. It provides a clean Python API:
+Download [`cue_utils_portable.py`](https://raw.githubusercontent.com/mikemolinet/agent-coordination-guide/main/cue_utils_portable.py) and save it in each agent's working directory alongside `coordination-config.json`.
+
+```bash
+# Download the utility
+curl -sO https://raw.githubusercontent.com/mikemolinet/agent-coordination-guide/main/cue_utils_portable.py
+
+# Download the config template
+curl -sO https://raw.githubusercontent.com/mikemolinet/agent-coordination-guide/main/coordination-config.json
+```
+
+It provides a clean Python API:
 
 ```python
 from cue_utils_portable import CueClient
@@ -1077,7 +1090,7 @@ cue.email_human(
     approve_context={
         "workspace_slug": "social-post-pipeline",
         "execution_id": "pipeline-run-001",
-        "callback_cue": cue.agents["enricher"]["cue_id"],
+        "callback_cue": cue.agents["enricher"]["cue_id"],  # replace "enricher" with your Agent B's name in coordination-config.json
         "dock_slug": "your-org/social-post-pipeline",
     },
 )
@@ -1187,9 +1200,11 @@ Add `flush=True` to print statements in handler scripts. Without it, output may 
 
 ## Files Included with This Guide
 
-1. **`guide-multi-agent-coordination.md`** — This file (the guide)
-2. **`cue_utils_portable.py`** — Python utility for agent-to-agent messaging + email (zero dependencies)
-3. **`coordination-config.json`** — Template for the config file (fill in your values)
+All files are available on GitHub: https://github.com/mikemolinet/agent-coordination-guide
+
+1. **[`README.md`](https://raw.githubusercontent.com/mikemolinet/agent-coordination-guide/main/README.md)** — This guide
+2. **[`cue_utils_portable.py`](https://raw.githubusercontent.com/mikemolinet/agent-coordination-guide/main/cue_utils_portable.py)** — Python utility for agent-to-agent messaging + email (zero external dependencies)
+3. **[`coordination-config.json`](https://raw.githubusercontent.com/mikemolinet/agent-coordination-guide/main/coordination-config.json)** — Template config file (fill in your values)
 
 ---
 
